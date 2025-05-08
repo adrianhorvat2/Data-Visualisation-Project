@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>D3 SVG Globe with Tooltip</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: #111; }
+    svg { display: block; }
+    #tooltip {
+      position: absolute;
+      background: lightgray;
+      padding: 5px 10px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      font-family: sans-serif;
+      font-size: 14px;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+<div id="tooltip"></div>
+<svg width="960" height="600"></svg>
+
+<script>
+const width = 960;
+const height = 600;
+
+const svg = d3.select("svg");
+const tooltip = d3.select("#tooltip");
+
+const projection = d3.geoOrthographic()
+  .scale(280)
+  .translate([width / 2, height / 2])
+  .clipAngle(90);
+
+const path = d3.geoPath(projection);
+
+svg.append("path")
+  .datum({type: "Sphere"})
+  .attr("fill", "rgba(255, 255, 255, 0.2)")
+  .attr("d", path);
+
+const g = svg.append("g");
+
+let countries;
+
+d3.json("countries-110m.json").then(world => {
+  countries = topojson.feature(world, world.objects.countries).features;
+
+  const countryPaths = g.selectAll("path")
+    .data(countries)
+    .enter()
+    .append("path")
+    .attr("fill", "#cfd8dc")
+    .attr("stroke", "#333")
+    .attr("stroke-width", 0.5)
+    .attr("d", path)
+    .on("mouseover", function(event, d) {
+      d3.select(this).attr("fill", "#f44336");
+      tooltip.style("opacity", 1)
+        .text(d.properties.name || "Unknown");
+    })
+    .on("mousemove", function(event) {
+      tooltip
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 20) + "px");
+    })
+    .on("mouseout", function() {
+      d3.select(this).attr("fill", "#cfd8dc");
+      tooltip.style("opacity", 0);
+    });
+
+  // Drag to rotate
+  let lastPos = null;
+  svg.call(
+    d3.drag()
+      .on("start", (event) => {
+        lastPos = [event.x, event.y];
+      })
+      .on("drag", (event) => {
+        const dx = event.x - lastPos[0];
+        const dy = event.y - lastPos[1];
+
+        const rotation = projection.rotate();
+        projection.rotate([
+          rotation[0] + dx * 0.5,
+          rotation[1] - dy * 0.5
+        ]);
+        lastPos = [event.x, event.y];
+
+        svg.selectAll("path").attr("d", path);
+      })
+  );
+
+  // Zoom
+  svg.call(
+    d3.zoom()
+      .scaleExtent([0.5, 4])
+      .on("zoom", (event) => {
+        projection.scale(280 * event.transform.k);
+        svg.selectAll("path").attr("d", path);
+      })
+  );
+});
+</script>
+</body>
+</html>
