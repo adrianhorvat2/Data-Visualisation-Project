@@ -37,6 +37,54 @@ function addRandomDots(svg, count) {
 
 addRandomDots(svg, 200); 
 
+function showLegend() {
+  const legendData = [
+    { position: 1, color: "gold", label: "Prvo mjesto" },
+    { position: 2, color: "silver", label: "Drugo mjesto" },
+    { position: 3, color: "#cd7f32", label: "Treće mjesto" },
+    { position: 4, color: "rgb(77, 67, 67)", label: "Ostali" }
+  ];
+
+  const legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${width - 170}, 20)`); 
+
+  legend.append("rect")
+    .attr("x", -10)
+    .attr("y", -10)
+    .attr("width", 150)
+    .attr("height", legendData.length * 20 + 20)
+    .attr("fill", "#fff")
+    .attr("stroke", "#ccc")
+    .attr("rx", 8) 
+    .attr("ry", 8)
+
+
+  legend.selectAll("rect.color")
+    .data(legendData)
+    .enter()
+    .append("rect")
+    .attr("class", "color")
+    .attr("x", 0)
+    .attr("y", (d, i) => i * 20)
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", d => d.color)
+    .attr("rx", 8) 
+    .attr("ry", 8);
+
+  legend.selectAll("text")
+    .data(legendData)
+    .enter()
+    .append("text")
+    .attr("x", 25)
+    .attr("y", (d, i) => i * 20 + 12)
+    .attr("font-size", "12px")
+    .attr("fill", "#000") 
+    .text(d => d.label)
+    .attr("font-weight", "bold");
+}
+
 svg.append("path")
   .datum({type: "Sphere"})
   .attr("fill", "#87CEEB")
@@ -137,10 +185,12 @@ timeline.selectAll()
   timeline.selectAll(".dot").classed("selected", false);
 
   if (isSelected) {
-    g.selectAll("path").attr("fill", "rgb(230, 230, 230)"); 
+    g.selectAll("path").attr("fill", "rgb(230, 230, 230)");
+    svg.select(".legend").remove(); // Ukloni legendu
   } 
   else {
     dot.classed("selected", true);
     updateYear(d);
+    showLegend();
   }
 });
