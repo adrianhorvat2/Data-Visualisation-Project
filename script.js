@@ -84,7 +84,7 @@ function showLegend() {
     .text(d => d.label)
     .attr("font-weight", "bold");
 }
-showLegend();
+
 svg.append("path")
   .datum({type: "Sphere"})
   .attr("fill", "#87CEEB")
@@ -146,6 +146,25 @@ function updateYear(year) {
         return country ? colorMap(country.Position) : "rgb(230, 230, 230)";
       })
       .attr("d", path)
+      .on("mouseover", function(event, d) {
+        const country = teamMap.get(d.properties.name?.toLowerCase());
+        const tooltip = d3.select("#tooltip");
+
+        tooltip
+          .style("display", "block")
+          .html(`
+            <strong>${d.properties.name}</strong><br>
+          `);
+      })
+      .on("mousemove", function(event) {
+        const tooltip = d3.select("#tooltip");
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY + 10) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select("#tooltip").style("display", "none");
+      });
   });
 }
 
@@ -179,18 +198,21 @@ timeline.selectAll()
       .text(d); 
   })
   .on("click", function(event, d) {
-  const dot = d3.select(this);
-  const isSelected = dot.classed("selected");
+    svg.select(".legend").remove();
+    const dot = d3.select(this);
+    const isSelected = dot.classed("selected");
 
-  timeline.selectAll(".dot").classed("selected", false);
+    timeline.selectAll(".dot").classed("selected", false);
 
-  if (isSelected) {
-    g.selectAll("path").attr("fill", "rgb(230, 230, 230)");
-    svg.select(".legend").remove(); // Ukloni legendu
-  } 
-  else {
-    dot.classed("selected", true);
-    updateYear(d);
-    showLegend();
-  }
-});
+    if (isSelected) {
+      g.selectAll("path")
+        .attr("fill", "rgb(230, 230, 230)") 
+        .on("mouseover", null) 
+        .on("mousemove", null)
+        .on("mouseout", null);
+    } else {
+      dot.classed("selected", true);
+      updateYear(d);
+      showLegend();
+    }
+  });
