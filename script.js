@@ -1,4 +1,4 @@
-const width = 1200, height = 600;
+const width = 1200, height = 800;
 
 const svg = d3.select("svg")
   .attr("width", width) 
@@ -20,7 +20,9 @@ svg.append("path")
 
 const g = svg.append("g");
 
+
 let countries = [], worldData;
+
 
 d3.json("countries-110m.json").then(world => {
   worldData = topojson.feature(world, world.objects.countries).features;
@@ -29,9 +31,11 @@ d3.json("countries-110m.json").then(world => {
     .enter()
     .append("path")
     .attr("stroke", "#333")
-    .attr("stroke-width", 0.5);
-  updateYear("2022");
+    .attr("stroke-width", 0.5)
+    .attr("fill", "rgb(230, 230, 230)")
+    .attr("d", path);
 });
+
 
 let lastPos;
 svg.call(d3.drag()
@@ -78,6 +82,9 @@ d3.select("#yearSelect").on("change", function() {
   updateYear(selectedYear);
 });
 
+
+
+
 const years = [
   1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982,
   1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022
@@ -93,7 +100,6 @@ timeline.selectAll()
   .enter()
   .append("div")
   .attr("class", "dot")
-  .attr("class", d => d === 2022 ? "dot selected" : "dot")
   .attr("data-year", d => d)
   .each(function(d) {
     d3.select(this)
@@ -101,10 +107,16 @@ timeline.selectAll()
       .text(d); 
   })
   .on("click", function(event, d) {
+  const dot = d3.select(this);
+  const isSelected = dot.classed("selected");
 
-    timeline.selectAll(".dot").classed("selected", false);
+  timeline.selectAll(".dot").classed("selected", false);
 
-    d3.select(this).classed("selected", true);
-
+  if (isSelected) {
+    g.selectAll("path").attr("fill", "rgb(230, 230, 230)"); 
+  } 
+  else {
+    dot.classed("selected", true);
     updateYear(d);
-  });
+  }
+});
