@@ -53,7 +53,7 @@ function showLegend() {
     .attr("x", -10)
     .attr("y", -10)
     .attr("width", 150)
-    .attr("height", legendData.length * 20 + 20)
+    .attr("height", legendData.length * 30 + 10)
     .attr("fill", "#fff")
     .attr("stroke", "#ccc")
     .attr("rx", 8) 
@@ -66,7 +66,7 @@ function showLegend() {
     .append("rect")
     .attr("class", "color")
     .attr("x", 0)
-    .attr("y", (d, i) => i * 20)
+    .attr("y", (d, i) => i * 30)
     .attr("width", 15)
     .attr("height", 15)
     .attr("fill", d => d.color)
@@ -78,13 +78,13 @@ function showLegend() {
     .enter()
     .append("text")
     .attr("x", 25)
-    .attr("y", (d, i) => i * 20 + 12)
-    .attr("font-size", "12px")
+    .attr("y", (d, i) => i * 30 + 12)
+    .attr("font-size", "14px")
     .attr("fill", "#000") 
     .text(d => d.label)
     .attr("font-weight", "bold");
 }
-
+showLegend();
 svg.append("path")
   .datum({type: "Sphere"})
   .attr("fill", "#87CEEB")
