@@ -13,6 +13,30 @@ const projection = d3.geoOrthographic()
 
 const path = d3.geoPath(projection);
 
+
+function addRandomDots(svg, count) {
+  const width = +svg.attr("width"); 
+  const height = +svg.attr("height"); 
+
+  const dotsData = Array.from({ length: count }, () => ({
+    x: Math.random() * width, 
+    y: Math.random() * height, 
+    radius: Math.random() * 3 + 2 
+  }));
+
+  svg.selectAll(".random-dot")
+    .data(dotsData)
+    .enter()
+    .append("circle")
+    .attr("class", "random-dot")
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y) 
+    .attr("r", d => d.radius) 
+    .attr("fill", "white") 
+}
+
+addRandomDots(svg, 200); 
+
 svg.append("path")
   .datum({type: "Sphere"})
   .attr("fill", "#87CEEB")
