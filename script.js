@@ -1,4 +1,4 @@
-const width = 1200, height = 800;
+const width = 800, height = 600;
 
 const svg = d3.select("svg")
   .attr("width", width) 
@@ -14,46 +14,23 @@ const projection = d3.geoOrthographic()
 const path = d3.geoPath(projection);
 
 
-function addRandomDots(svg, count) {
-  const width = +svg.attr("width"); 
-  const height = +svg.attr("height"); 
-
-  const dotsData = Array.from({ length: count }, () => ({
-    x: Math.random() * width, 
-    y: Math.random() * height, 
-    radius: Math.random() * 3 + 2 
-  }));
-
-  svg.selectAll(".random-dot")
-    .data(dotsData)
-    .enter()
-    .append("circle")
-    .attr("class", "random-dot")
-    .attr("cx", d => d.x)
-    .attr("cy", d => d.y) 
-    .attr("r", d => d.radius) 
-    .attr("fill", "white") 
-}
-
-addRandomDots(svg, 200); 
-
 function showLegend() {
   const legendData = [
     { position: 1, color: "gold", label: "Prvo mjesto" },
     { position: 2, color: "silver", label: "Drugo mjesto" },
     { position: 3, color: "#cd7f32", label: "Treće mjesto" },
-    { position: 4, color: "rgb(77, 67, 67)", label: "Ostali" }
+    { position: 4, color: "rgb(126, 117, 117)", label: "Ostali sudionici" }
   ];
 
   const legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${width - 170}, 20)`); 
+    .attr("transform", `translate(${width - 130}, 15)`); 
 
   legend.append("rect")
-    .attr("x", -10)
+    .attr("x", 5)
     .attr("y", -10)
-    .attr("width", 150)
-    .attr("height", legendData.length * 30 + 10)
+    .attr("width", 120)
+    .attr("height", legendData.length * 20 + 10)
     .attr("fill", "#fff")
     .attr("stroke", "#ccc")
     .attr("rx", 8) 
@@ -65,10 +42,10 @@ function showLegend() {
     .enter()
     .append("rect")
     .attr("class", "color")
-    .attr("x", 0)
-    .attr("y", (d, i) => i * 30)
-    .attr("width", 15)
-    .attr("height", 15)
+    .attr("x", 20)
+    .attr("y", (d, i) => i * 20) 
+    .attr("width", 10)
+    .attr("height", 10)
     .attr("fill", d => d.color)
     .attr("rx", 8) 
     .attr("ry", 8);
@@ -77,9 +54,9 @@ function showLegend() {
     .data(legendData)
     .enter()
     .append("text")
-    .attr("x", 25)
-    .attr("y", (d, i) => i * 30 + 12)
-    .attr("font-size", "14px")
+    .attr("x", 37)
+    .attr("y", (d, i) => i * 20 + 9)
+    .attr("font-size", "11px")
     .attr("fill", "#000") 
     .text(d => d.label)
     .attr("font-weight", "bold");
@@ -133,7 +110,7 @@ const colorMap = (position) => {
   if (position === 1) return "gold";
   if (position === 2) return "silver";
   if (position === 3) return "#cd7f32";
-  return "rgb(77, 67, 67)"; 
+  return "rgb(126, 117, 117)"; 
 };
 
 function updateYear(year) {
