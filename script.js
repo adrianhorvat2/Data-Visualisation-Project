@@ -1,14 +1,14 @@
-const width = 800, height = 600;
+const width_globe = 800, height_globe = 600;
 
-const svg = d3.select("svg")
-  .attr("width", width) 
-  .attr("height", height); 
+const svg = d3.select("#globe")
+  .attr("width", width_globe) 
+  .attr("height", height_globe); 
 
 const tooltip = d3.select("#tooltip");
 
 const projection = d3.geoOrthographic()
   .scale(280)
-  .translate([width / 2, height / 2])
+  .translate([width_globe / 2, height_globe / 2])
   .clipAngle(90);
 
 const path = d3.geoPath(projection);
@@ -24,14 +24,14 @@ function showLegend() {
 
   const legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${width - 130}, 15)`); 
+    .attr("transform", `translate(${width_globe - 150}, 15)`); 
 
   legend.append("rect")
     .attr("x", 5)
     .attr("y", -10)
     .attr("width", 120)
     .attr("height", legendData.length * 20 + 10)
-    .attr("fill", "#fff")
+    .attr("fill","rgb(251, 249, 249)")
     .attr("stroke", "#ccc")
     .attr("rx", 8) 
     .attr("ry", 8)
@@ -57,7 +57,6 @@ function showLegend() {
     .attr("x", 37)
     .attr("y", (d, i) => i * 20 + 9)
     .attr("font-size", "11px")
-    .attr("fill", "#000") 
     .text(d => d.label)
     .attr("font-weight", "bold");
 }
