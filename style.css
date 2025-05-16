@@ -1,9 +1,30 @@
 body {
     margin: 0;
-    overflow: hidden;
-    display: flex; 
+    padding: 0;
     background: #f7f7f7;
     font-family: Arial, sans-serif;
+    min-height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: #1c1c1c;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    z-index: 1000;
+}
+
+header h1 {
+    margin: 0;
+    color: #e9e9e9;
+    font-size: 1.8rem;
 }
 
 #globe {
@@ -25,7 +46,8 @@ body {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
     gap: 200px;
-    margin: 7% 5%;
+    margin: 2% 5%;
+    flex-grow: 1;
 }
         
 
@@ -40,15 +62,12 @@ body {
 }
 
 #timeline {
-    position: absolute;
-    top: 3%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     width: 90%;
+    margin: 2rem auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 100;
 }
 
 #timeline .line {

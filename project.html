@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    
     <meta charset="UTF-8">
     <title>D3 Globe - FIFA Results</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <link rel="stylesheet" href="style.css"></link>
-
   </head>
-
   <body>
-        
-    <div id="timeline">
+    <div class="container">
+      <header>
+          <h1>Vizualizacija rezultata FIFA svjetskih prvenstava</h1>
+      </header>
+      
+      <div id="timeline"></div>
+      
+      <div class="parent">
+          <svg id="globe"></svg>
+          <div id="control-panel">
+            <div>dasdsaas</div>
+          </div>
+      </div>
+      
+      <div id="tooltip"></div>
     </div>
-    <div class="parent">
-        <svg id="globe"></svg>
-        <div id="control-panel">
-          <div>Vizualizacija rezultata FIFA svjetskih prvenstava</div>
-        </div>
-    </div>
-    <div id="tooltip"></div>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
