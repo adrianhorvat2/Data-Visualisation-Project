@@ -24,7 +24,7 @@ function showLegend() {
 
   const legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${width_globe - 150}, 15)`); 
+    .attr("transform", `translate(${width_globe - 135}, 20)`); 
 
   legend.append("rect")
     .attr("x", 5)
