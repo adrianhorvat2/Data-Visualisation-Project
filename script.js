@@ -1,4 +1,4 @@
-const width_globe = 800, height_globe = 600;
+const width_globe = 800, height_globe = 664;
 
 const svg = d3.select("#globe")
   .attr("width", width_globe) 
@@ -147,6 +147,7 @@ function updateYear(year) {
 d3.select("#yearSelect").on("change", function() {
   const selectedYear = this.value;
   updateYear(selectedYear);
+  showGraphs(selectedYear);
 });
 
 
@@ -186,9 +187,154 @@ timeline.selectAll()
         .on("mouseover", null) 
         .on("mousemove", null)
         .on("mouseout", null);
+      d3.select("#control-panel").selectAll("*").remove();
     } else {
       dot.classed("selected", true);
       updateYear(d);
       showLegend();
+      showGraphs(d);
     }
   });
+
+
+function top3GoalscorerTeams(data, container) {
+  const top3Data = data
+    .sort((a, b) => b["Goals For"] - a["Goals For"])
+    .slice(0, 3);
+
+  const svgWidth = 800;
+  const svgHeight = 600;
+
+  const barSvg = container
+    .append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+  const yScale = d3.scaleLinear()
+    .domain([0, d3.max(top3Data, d => d["Goals For"])])
+    .range([svgHeight - 100, 50]);
+
+  const xPositions = [svgWidth / 2 - 75, svgWidth / 2 + 75, svgWidth / 2 - 225];
+
+  const graphGroup = barSvg.append("g")
+    .attr("transform", "translate(50, 50)");
+
+  const yAxis = d3.axisLeft(yScale);
+
+  const yGrid = d3.axisLeft(yScale)
+    .tickSize(-(svgWidth - 250))
+    .tickFormat(""); 
+
+  graphGroup.append("g")
+    .attr("class", "grid")
+    .attr("transform", "translate(100, 0)")
+    .call(yGrid)
+    .selectAll("line")
+    .attr("opacity", 0.2); 
+
+
+  graphGroup.append("g")
+    .attr("transform", "translate(100, 0)")
+    .call(yAxis);
+
+  graphGroup.select(".grid")
+    .select(".domain")
+    .remove();
+
+  graphGroup.selectAll("rect")
+  .data(top3Data)
+  .enter()
+  .append("rect")
+  .attr("x", (d, i) => xPositions[i])
+  .attr("y", d => yScale(d["Goals For"]))
+  .attr("width", 100)
+  .attr("height", d => svgHeight - 100 - yScale(d["Goals For"]))
+  .attr("fill", (d, i) => {
+    const blueShades = ["#1a237e", "#3f51b5", "#949ed1"];
+    return blueShades[i % blueShades.length]; 
+  });
+
+  graphGroup.selectAll("text.team")
+  .data(top3Data)
+  .enter()
+  .append("text")
+  .attr("class", "team")
+  .attr("x", (d, i) => xPositions[i] + 50)
+  .attr("y", d => yScale(d["Goals For"]) - 10)
+  .attr("text-anchor", "middle")
+  .text(d => d.Team)
+  .style("font-size", "16px")
+  .style("font-weight", "bold");
+
+  barSvg.append("text")
+    .attr("x", svgWidth / 2)
+    .attr("y", 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "20px")
+    .style("font-weight", "bold")
+    .text("Top 3 tima po postignutim golovima");
+}
+
+function testGraph(data, container) {
+
+  const svgWidth = 800;
+  const svgHeight = 600;
+  
+  const svg = container
+    .append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+  svg.append("text")
+    .attr("x", svgWidth / 2)
+    .attr("y", svgHeight / 2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "30px")
+    .style("font-weight", "bold")
+    .text("Test Graph");
+}
+
+function showGraphs(year) {
+  d3.json(`WC-Data/fifa${year}.json`).then(data => {
+    const graphs = [
+      (container) => top3GoalscorerTeams(data, container),
+      (container) => testGraph(data, container)
+    ];
+    let currentGraphIndex = 0;
+    const controlPanel = d3.select("#control-panel");
+    controlPanel.selectAll("*").remove();
+
+    const navigation = controlPanel.append("div")
+      .attr("class", "navigation")
+      .style("display", "flex")
+      .style("justify-content", "space-between")
+      .style("padding", "10px");
+
+    navigation.append("button")
+      .attr("class", "nav-button")
+      .text("← Prethodni")
+      .on("click", () => {
+        currentGraphIndex = (currentGraphIndex - 1 + graphs.length) % graphs.length;
+        renderGraph();
+      });
+
+    navigation.append("button")
+      .attr("class", "nav-button")
+      .text("Sljedeći →")
+      .on("click", () => {
+        currentGraphIndex = (currentGraphIndex + 1) % graphs.length;
+        renderGraph();
+      });
+
+    const graphContainer = controlPanel.append("div")
+      .attr("id", "graph-container");
+
+    function renderGraph() {
+      graphContainer.selectAll("*").remove(); 
+      graphs[currentGraphIndex](graphContainer); 
+    }
+
+    renderGraph();
+  }).catch(error => {
+    console.error("Error loading data:", error);
+  });
+}
