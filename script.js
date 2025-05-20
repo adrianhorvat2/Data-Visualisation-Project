@@ -151,7 +151,7 @@ d3.select("#yearSelect").on("change", function() {
 });
 
 
-
+//showGraphs(1990);
 
 const years = [
   1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982,
@@ -197,10 +197,10 @@ timeline.selectAll()
   });
 
 
-function top3GoalscorerTeams(data, container) {
-  const top3Data = data
+function top7GoalscorerTeams(data, container) {
+  const top7Data = data
     .sort((a, b) => b["Goals For"] - a["Goals For"])
-    .slice(0, 3);
+    .slice(0, 7);
 
   const svgWidth = 800;
   const svgHeight = 600;
@@ -211,11 +211,10 @@ function top3GoalscorerTeams(data, container) {
     .attr("height", svgHeight);
 
   const yScale = d3.scaleLinear()
-    .domain([0, d3.max(top3Data, d => d["Goals For"])])
+    .domain([0, d3.max(top7Data, d => d["Goals For"])])
     .range([svgHeight - 100, 50]);
 
-  const xPositions = [svgWidth / 2 - 75, svgWidth / 2 + 75, svgWidth / 2 - 225];
-
+  const xPositions = [svgWidth / 2 - 270 , svgWidth / 2 - 195, svgWidth / 2 - 120, svgWidth / 2 - 45, svgWidth / 2 + 30, svgWidth / 2 + 105, svgWidth / 2 + 180];
   const graphGroup = barSvg.append("g")
     .attr("transform", "translate(50, 50)");
 
@@ -241,29 +240,37 @@ function top3GoalscorerTeams(data, container) {
     .select(".domain")
     .remove();
 
+
+  const colorScale = d3.scaleLinear()
+  .domain([d3.min(top7Data, d => d["Goals For"]), d3.max(top7Data, d => d["Goals For"])])
+  .range(["#bbdefb" , "#0d47a1"]); 
+
+
   graphGroup.selectAll("rect")
-  .data(top3Data)
+  .data(top7Data)
   .enter()
   .append("rect")
   .attr("x", (d, i) => xPositions[i])
   .attr("y", d => yScale(d["Goals For"]))
-  .attr("width", 100)
+  .attr("width", 40)
   .attr("height", d => svgHeight - 100 - yScale(d["Goals For"]))
-  .attr("fill", (d, i) => {
-    const blueShades = ["#1a237e", "#3f51b5", "#949ed1"];
-    return blueShades[i % blueShades.length]; 
-  });
+  .attr("fill", d => colorScale(d["Goals For"]));
 
-  graphGroup.selectAll("text.team")
-  .data(top3Data)
+
+graphGroup.selectAll("text.team")
+  .data(top7Data)
   .enter()
   .append("text")
   .attr("class", "team")
-  .attr("x", (d, i) => xPositions[i] + 50)
+  .attr("x", (d, i) => xPositions[i] + 20)
   .attr("y", d => yScale(d["Goals For"]) - 10)
-  .attr("text-anchor", "middle")
+  .attr("transform", (d, i) => {
+    const x = xPositions[i] + 22;
+    const y = yScale(d["Goals For"]) - 10;
+    return `rotate(-40, ${x}, ${y})`; 
+  })
   .text(d => d.Team)
-  .style("font-size", "16px")
+  .style("font-size", "14px")
   .style("font-weight", "bold");
 
   barSvg.append("text")
@@ -272,7 +279,7 @@ function top3GoalscorerTeams(data, container) {
     .attr("text-anchor", "middle")
     .style("font-size", "20px")
     .style("font-weight", "bold")
-    .text("Top 3 tima po postignutim golovima");
+    .text("Top 7 timova po postignutim golovima");
 }
 
 function testGraph(data, container) {
@@ -296,7 +303,7 @@ function testGraph(data, container) {
 function showGraphs(year) {
   d3.json(`WC-Data/fifa${year}.json`).then(data => {
     const graphs = [
-      (container) => top3GoalscorerTeams(data, container),
+      (container) => top7GoalscorerTeams(data, container),
       (container) => testGraph(data, container)
     ];
     let currentGraphIndex = 0;
