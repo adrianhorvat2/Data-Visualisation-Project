@@ -197,7 +197,7 @@ timeline.selectAll()
   });
 
 
-function top7GoalscorerTeams(data, container) {
+function drawTop7GoalscorerTeamsGraph(data, container) {
   const top7Data = data
     .sort((a, b) => b["Goals For"] - a["Goals For"])
     .slice(0, 7);
@@ -282,29 +282,119 @@ graphGroup.selectAll("text.team")
     .text("Top 7 timova po postignutim golovima");
 }
 
-function testGraph(data, container) {
-
+function drawGoalsScatterPlot(data, container) {
   const svgWidth = 800;
   const svgHeight = 600;
-  
+
   const svg = container
     .append("svg")
     .attr("width", svgWidth)
     .attr("height", svgHeight);
+
+  const margin = { top: 50, right: 50, bottom: 70, left: 70 };
+  const width = svgWidth - margin.left - margin.right;
+  const height = svgHeight - margin.top - margin.bottom;
+
+  const graphGroup = svg.append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+  const xScale = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d["Goals For"]) + 2])
+    .range([0, width]);
+
+  const yScale = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d["Goals Against"]) + 2])
+    .range([height, 0]);
+
+  const sizeScale = d3.scaleSqrt()
+    .domain([0, d3.max(data, d => d["Games Played"])])
+    .range([5, 15]);
+
+  graphGroup.append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale))
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", 40)
+    .attr("fill", "black")
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", "bold")
+    .text("Golovi postignuti");
+
+  graphGroup.append("g")
+    .call(d3.axisLeft(yScale))
+    .append("text")
+    .attr("x", -height / 2)
+    .attr("y", -40)
+    .attr("fill", "black")
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .style("font-size", "14px")
+    .style("font-weight", "bold")
+    .text("Golovi primljeni");
+
+  const xGrid = d3.axisBottom(xScale)
+    .tickSize(-height)
+    .tickFormat("");
+  const yGrid = d3.axisLeft(yScale)
+    .tickSize(-width)
+    .tickFormat("");
+
+  graphGroup.append("g")
+    .attr("class", "grid")
+    .call(yGrid)
+    .selectAll("line")
+    .attr("opacity", 0.2);
+
+  graphGroup.append("g")
+    .attr("class", "grid")
+    .attr("transform", `translate(0, ${height})`)
+    .call(xGrid)
+    .selectAll("line")
+    .attr("opacity", 0.2);
+
+  graphGroup.selectAll(".grid .domain").remove();
+
+  graphGroup.selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", d => xScale(d["Goals For"]))
+    .attr("cy", d => yScale(d["Goals Against"]))
+    .attr("r", d => sizeScale(d["Games Played"]))
+    .attr("fill", d => colorMap(d.Position))
+    .attr("opacity", 1) 
+    .on("mouseover", function(event, d) {
+      d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+      d3.select("#tooltip")
+        .style("display", "block")
+        .html(`
+          <strong>${d.Team}</strong><br>
+          <div>Utakmice: ${d["Games Played"]}</div>
+        `)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", function() {
+      d3.select(this).attr("stroke", null);
+      d3.select("#tooltip").style("display", "none");
+    });
+
   svg.append("text")
     .attr("x", svgWidth / 2)
-    .attr("y", svgHeight / 2)
+    .attr("y", 30)
     .attr("text-anchor", "middle")
-    .style("font-size", "30px")
+    .style("font-size", "20px")
     .style("font-weight", "bold")
-    .text("Test Graph");
+    .text("Odnos primljenih i postignutih golova");
 }
 
 function showGraphs(year) {
   d3.json(`WC-Data/fifa${year}.json`).then(data => {
     const graphs = [
-      (container) => top7GoalscorerTeams(data, container),
-      (container) => testGraph(data, container)
+      (container) => drawTop7GoalscorerTeamsGraph(data, container),
+      (container) => drawGoalsScatterPlot(data, container)
     ];
     let currentGraphIndex = 0;
     const controlPanel = d3.select("#control-panel");
