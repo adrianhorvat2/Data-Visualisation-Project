@@ -71,6 +71,24 @@ const g = svg.append("g");
 
 let countries = [], worldData;
 
+function setDefaultHoverBehavior(selection) {
+  selection
+    .on("mouseover", function(event, d) {
+      d3.select(this).attr("fill", "rgb(150, 150, 150)");
+      d3.select("#tooltip")
+        .style("display", "block")
+        .html(`<strong>${d.properties.name}</strong>`);
+    })
+    .on("mousemove", function(event) {
+      d3.select("#tooltip")
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", function() {
+      d3.select(this).attr("fill", "rgb(230, 230, 230)");
+      d3.select("#tooltip").style("display", "none");
+    });
+}
 
 d3.json("countries-110m.json").then(world => {
   worldData = topojson.feature(world, world.objects.countries).features;
@@ -82,6 +100,8 @@ d3.json("countries-110m.json").then(world => {
     .attr("stroke-width", 0.5)
     .attr("fill", "rgb(230, 230, 230)")
     .attr("d", path);
+
+    setDefaultHoverBehavior(countries);
 });
 
 
@@ -187,12 +207,14 @@ timeline.selectAll()
         .on("mouseover", null) 
         .on("mousemove", null)
         .on("mouseout", null);
+
+      setDefaultHoverBehavior(g.selectAll("path"));
       d3.select("#control-panel").selectAll("*").remove();
     } else {
       dot.classed("selected", true);
       updateYear(d);
       showLegend();
-      showGraphs(d);
+      showGraphsByYear(d);
     }
   });
 
@@ -481,7 +503,7 @@ function drawMatchResultsChart(data, container) {
     .text("Pobjede, neriješeno i porazi po timovima");
 }
 
-function showGraphs(year) {
+function showGraphsByYear(year) {
   d3.json(`WC-Data/fifa${year}.json`).then(data => {
     const graphs = [
       (container) => drawTop7GoalscorerTeamsGraph(data, container),
