@@ -390,11 +390,103 @@ function drawGoalsScatterPlot(data, container) {
     .text("Odnos primljenih i postignutih golova");
 }
 
+function drawMatchResultsChart(data, container) {
+  const svgWidth = 800;
+  const svgHeight = 600;
+
+  const svg = container
+    .append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+  const margin = { top: 50, right: 20, bottom: 20, left: 20 };
+  const width = svgWidth - margin.left - margin.right;
+  const height = svgHeight - margin.top - margin.bottom;
+
+  const graphGroup = svg.append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+  const sortedData = data.sort((a, b) => a.Position - b.Position);
+
+  const gridSize = 4;
+  const cellWidth = width / gridSize;
+  const cellHeight = height / gridSize;
+  const pieRadius = Math.min(cellWidth, cellHeight) / 2 - 10 
+
+  const pie = d3.pie()
+    .value(d => d.value)
+    .sort(null);
+
+  const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(d => pieRadius * Math.sqrt(d.data.games / 7)); 
+
+  const colors = {
+    Win: "#4caf50", 
+    Draw: "#b3b1b1", 
+    Loss: "#f44336" 
+  };
+
+  sortedData.forEach((team, i) => {
+    const row = Math.floor(i / gridSize);
+    const col = i % gridSize;
+    const x = col * cellWidth + cellWidth / 2;
+    const y = row * cellHeight + cellHeight / 2;
+
+    const pieData = [
+      { key: "Win", value: team.Win, label: "Pobjede", games: team["Games Played"] },
+      { key: "Draw", value: team.Draw, label: "Neriješeno", games: team["Games Played"] },
+      { key: "Loss", value: team.Loss, label: "Porazi", games: team["Games Played"] }
+    ].filter(d => d.value > 0); 
+
+    const pieGroup = graphGroup.append("g")
+      .attr("transform", `translate(${x}, ${y})`);
+
+    pieGroup.selectAll("path")
+      .data(pie(pieData))
+      .enter()
+      .append("path")
+      .attr("d", arc)
+      .attr("fill", d => colors[d.data.key])
+      .attr("opacity", 0.8)
+      .on("mouseover", function(event, d) {
+        d3.select(this).attr("opacity", 1).attr("stroke", "black").attr("stroke-width", 1);
+        d3.select("#tooltip")
+          .style("display", "block")
+          .html(`
+            ${d.data.label}: ${d.data.value}<br>
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY + 10) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select(this).attr("opacity", 0.8).attr("stroke", null);
+        d3.select("#tooltip").style("display", "none");
+      });
+
+    pieGroup.append("text")
+      .attr("y", pieRadius + 15)
+      .attr("text-anchor", "middle")
+      .style("font-size", "10px")
+      .style("font-weight", "bold")
+      .text(team.Team);
+  });
+
+  svg.append("text")
+    .attr("x", svgWidth / 2)
+    .attr("y", 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("font-weight", "bold")
+    .text("Pobjede, neriješeno i porazi po timovima");
+}
+
 function showGraphs(year) {
   d3.json(`WC-Data/fifa${year}.json`).then(data => {
     const graphs = [
       (container) => drawTop7GoalscorerTeamsGraph(data, container),
-      (container) => drawGoalsScatterPlot(data, container)
+      (container) => drawGoalsScatterPlot(data, container),
+      (container) => drawMatchResultsChart(data, container)
     ];
     let currentGraphIndex = 0;
     const controlPanel = d3.select("#control-panel");
