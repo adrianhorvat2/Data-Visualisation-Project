@@ -94,6 +94,20 @@ function setDefaultHoverBehavior(selection) {
         showGraphsByCountry(d.properties.name);
       }
     });
+    showDefaultMessage();
+}
+
+function showDefaultMessage() {
+  d3.select("#control-panel")
+    .append("div")
+    .style("display", "flex")
+    .style("justify-content", "center")
+    .style("align-items", "center")
+    .style("font-size", "20px")
+    .style("font-weight", "bold")
+    .style("padding", "20px")
+    .style("height", "100%") 
+    .text("Odaberite državu na globusu ili godinu na liniji za prikaz podataka");
 }
 
 d3.json("countries-110m.json").then(world => {
@@ -177,8 +191,6 @@ d3.select("#yearSelect").on("change", function() {
 });
 
 
-//showGraphs(1990);
-
 const years = [
   1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982,
   1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022
@@ -213,6 +225,7 @@ timeline.selectAll()
 
         setDefaultHoverBehavior(g.selectAll("path"));
         d3.select("#control-panel").selectAll("*").remove();
+        showDefaultMessage();
       } else {
         timeline.selectAll(".dot").classed("selected", false);
         d3.select(this).classed("selected", true);
