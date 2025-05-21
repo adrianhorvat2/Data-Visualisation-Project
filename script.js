@@ -653,7 +653,7 @@ function drawTestGraph(container, country) {
       .attr("cx", d => xScale(d.year))
       .attr("cy", d => yScale(d.position))
       .attr("r", 5)
-      .attr("fill", "steelblue")
+      .attr("fill", d => d.position === 1 || d.position === 2 || d.position === 3 ? colorMap(d.position) : "steelblue")
       .on("mouseover", function(event, d) {
         d3.select(this).attr("r", 8);
         d3.select("#tooltip")
@@ -665,7 +665,7 @@ function drawTestGraph(container, country) {
       .on("mouseout", function() {
         d3.select(this).attr("r", 5);
         d3.select("#tooltip").style("display", "none");
-      });;
+      });
 
     svg.append("text")
       .attr("x", svgWidth / 2)
