@@ -70,6 +70,7 @@ const g = svg.append("g");
 
 
 let countries = [], worldData;
+let isYearSelected = false;
 
 function setDefaultHoverBehavior(selection) {
   selection
@@ -87,6 +88,11 @@ function setDefaultHoverBehavior(selection) {
     .on("mouseout", function() {
       d3.select(this).attr("fill", "rgb(230, 230, 230)");
       d3.select("#tooltip").style("display", "none");
+    })
+    .on("click", function(event, d) {
+      if (!isYearSelected) {
+        showGraphsByCountry(d.properties.name);
+      }
     });
 }
 
@@ -196,22 +202,27 @@ timeline.selectAll()
   })
   .on("click", function(event, d) {
     svg.select(".legend").remove();
-    const dot = d3.select(this);
-    const isSelected = dot.classed("selected");
+    
+    if (isYearSelected) {
+      if (d3.select(this).classed("selected")) {
+        isYearSelected = false;
+        timeline.selectAll(".dot").classed("selected", false);
+        
+        g.selectAll("path")
+          .attr("fill", "rgb(230, 230, 230)") 
 
-    timeline.selectAll(".dot").classed("selected", false);
-
-    if (isSelected) {
-      g.selectAll("path")
-        .attr("fill", "rgb(230, 230, 230)") 
-        .on("mouseover", null) 
-        .on("mousemove", null)
-        .on("mouseout", null);
-
-      setDefaultHoverBehavior(g.selectAll("path"));
-      d3.select("#control-panel").selectAll("*").remove();
+        setDefaultHoverBehavior(g.selectAll("path"));
+        d3.select("#control-panel").selectAll("*").remove();
+      } else {
+        timeline.selectAll(".dot").classed("selected", false);
+        d3.select(this).classed("selected", true);
+        updateYear(d);
+        showLegend();
+        showGraphsByYear(d);
+      }
     } else {
-      dot.classed("selected", true);
+      isYearSelected = true;
+      d3.select(this).classed("selected", true);
       updateYear(d);
       showLegend();
       showGraphsByYear(d);
@@ -548,4 +559,67 @@ function showGraphsByYear(year) {
   }).catch(error => {
     console.error("Error loading data:", error);
   });
+}
+
+
+function drawTestGraph(container, country) {
+  const svgWidth = 800;
+  const svgHeight = 600;
+
+  const barSvg = container
+    .append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+
+      barSvg.append("text")
+        .attr("x", svgWidth / 2)
+        .attr("y", svgHeight / 2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "20px")
+        .style("font-weight", "bold")
+        .text(`${country}`);
+ 
+
+}
+
+function showGraphsByCountry(country) {
+  const graphs = [
+    (container) => drawTestGraph(container, country),
+  ];
+  let currentGraphIndex = 0;
+  const controlPanel = d3.select("#control-panel");
+  controlPanel.selectAll("*").remove();
+
+  const navigation = controlPanel.append("div")
+    .attr("class", "navigation")
+    .style("display", "flex")
+    .style("justify-content", "space-between")
+    .style("padding", "10px");
+
+  navigation.append("button")
+    .attr("class", "nav-button")
+    .text("← Prethodni")
+    .on("click", () => {
+      currentGraphIndex = (currentGraphIndex - 1 + graphs.length) % graphs.length;
+      renderGraph();
+    });
+
+  navigation.append("button")
+    .attr("class", "nav-button")
+    .text("Sljedeći →")
+    .on("click", () => {
+      currentGraphIndex = (currentGraphIndex + 1) % graphs.length;
+      renderGraph();
+    });
+
+  const graphContainer = controlPanel.append("div")
+    .attr("id", "graph-container");
+
+  function renderGraph() {
+    graphContainer.selectAll("*").remove();
+    graphs[currentGraphIndex](graphContainer);
+  }
+
+  renderGraph();
 }
