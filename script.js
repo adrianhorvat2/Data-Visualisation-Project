@@ -565,22 +565,118 @@ function showGraphsByYear(year) {
 function drawTestGraph(container, country) {
   const svgWidth = 800;
   const svgHeight = 600;
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = svgWidth - margin.left - margin.right;
+  const height = svgHeight - margin.top - margin.bottom;
 
-  const barSvg = container
+  const svg = container
     .append("svg")
     .attr("width", svgWidth)
     .attr("height", svgHeight);
 
+  const graphGroup = svg.append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-      barSvg.append("text")
+  Promise.all(
+    years.map(year =>
+      d3.json(`WC-Data/fifa${year}.json`).then(data => ({
+        year,
+        data: data.find(d => d.Team.toLowerCase() === country.toLowerCase())
+      }))
+    )
+  ).then(results => {
+    const countryData = results
+      .filter(result => result.data)
+      .map(result => ({
+        year: result.year,
+        position: result.data.Position
+      }));
+
+    if (countryData.length === 0) {
+      svg.append("text")
         .attr("x", svgWidth / 2)
         .attr("y", svgHeight / 2)
         .attr("text-anchor", "middle")
         .style("font-size", "20px")
         .style("font-weight", "bold")
-        .text(`${country}`);
- 
+        .text(`Ekipa ${country} nije nikada sudjelovala na svjetskom prvenstvu.`);
+      return;
+    }
 
+    const xScale = d3.scalePoint()
+      .domain(countryData.map(d => d.year))
+      .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+      .domain([1, Math.max(...countryData.map(d => d.position), 32)])
+      .range([0, height]);
+
+    const line = d3.line()
+      .x(d => xScale(d.year))
+      .y(d => yScale(d.position));
+
+
+    graphGroup.append("g")
+      .attr("transform", `translate(0, ${height})`)
+      .call(d3.axisBottom(xScale))
+      .selectAll("text")
+      .style("font-size", "12px")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
+
+    graphGroup.append("g")
+      .append("text")
+      .attr("x", -height / 2)
+      .attr("y", -35)
+      .attr("fill", "black")
+      .attr("transform", "rotate(-90)")
+      .text("Pozicija")
+      .style("font-size", "14px")
+      .style("font-weight", "bold");
+
+    graphGroup.append("g")
+      .call(d3.axisLeft(yScale))
+      .selectAll("text") 
+      .style("font-size", "12px");
+
+    graphGroup.append("path")
+      .datum(countryData)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 2)
+      .attr("d", line);
+
+    graphGroup.selectAll("circle")
+      .data(countryData)
+      .enter()
+      .append("circle")
+      .attr("cx", d => xScale(d.year))
+      .attr("cy", d => yScale(d.position))
+      .attr("r", 5)
+      .attr("fill", "steelblue")
+      .on("mouseover", function(event, d) {
+        d3.select(this).attr("r", 8);
+        d3.select("#tooltip")
+          .style("display", "block")
+          .html(`Godina: ${d.year}<br>Pozicija: ${d.position}`)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY + 10) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select(this).attr("r", 5);
+        d3.select("#tooltip").style("display", "none");
+      });;
+
+    svg.append("text")
+      .attr("x", svgWidth / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .text(`${country} - Pozicija kroz godine`)
+      .style("font-size", "20px")
+      .style("font-weight", "bold");
+  }).catch(error => {
+    console.error("Greška pri učitavanju podataka:", error);
+  });
 }
 
 function showGraphsByCountry(country) {
