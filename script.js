@@ -152,24 +152,87 @@ const colorMap = (position) => {
   return "rgb(126, 117, 117)"; 
 };
 
+const historicalCountryMap = {
+  "yugoslavia": [
+    "Bosnia and Herzegovina",
+    "Croatia",
+    "Macedonia",
+    "Montenegro",
+    "Serbia",
+    "Slovenia"
+  ],
+  "czechoslovakia": [
+    "Czech Republic",
+    "Slovakia"
+  ],
+  "soviet union": [
+    "Russia",
+    "Ukraine",
+    "Belarus",
+    "Moldova",
+    "Lithuania",
+    "Latvia",
+    "Estonia",
+    "Georgia",
+    "Armenia",
+    "Azerbaijan",
+    "Kazakhstan",
+    "Uzbekistan",
+    "Kyrgyzstan",
+    "Tajikistan",
+    "Turkmenistan"
+  ]
+};
+
 function updateYear(year) {
   d3.json(`WC-Data/fifa${year}.json`).then(data => {
     const teamMap = new Map(data.map(d => [d.Team.toLowerCase(), d]));
 
+    const successorToHistorical = new Map();
+    Object.keys(historicalCountryMap).forEach(historical => {
+      if (teamMap.has(historical)) {
+        const historicalData = teamMap.get(historical);
+        historicalCountryMap[historical].forEach(successor => {
+          successorToHistorical.set(successor.toLowerCase(), {
+            historicalName: historical,
+            position: historicalData.Position
+          });
+        });
+      }
+    });
+
     countries
       .attr("fill", d => {
-        const country = teamMap.get(d.properties.name?.toLowerCase());
+        const countryName = d.properties.name?.toLowerCase();
+        if (successorToHistorical.has(countryName)) {
+          const { position } = successorToHistorical.get(countryName);
+          return colorMap(position);
+        }
+        const country = teamMap.get(countryName);
         return country ? colorMap(country.Position) : "rgb(230, 230, 230)";
       })
       .attr("d", path)
       .on("mouseover", function(event, d) {
-        const country = teamMap.get(d.properties.name?.toLowerCase());
+        const countryName = d.properties.name?.toLowerCase();
         const tooltip = d3.select("#tooltip");
+        let displayName = d.properties.name;
+        let additionalInfo = "";
+
+        if (successorToHistorical.has(countryName)) {
+          const { historicalName, position } = successorToHistorical.get(countryName);
+          displayName = historicalName.charAt(0).toUpperCase() + historicalName.slice(1);
+          additionalInfo = `<br>Pozicija: ${position}`;
+        } else {
+          const country = teamMap.get(countryName);
+          if (country) {
+            additionalInfo = `<br>Pozicija: ${country.Position}`;
+          }
+        }
 
         tooltip
           .style("display", "block")
           .html(`
-            <strong>${d.properties.name}</strong><br>
+            <strong>${displayName}</strong>${additionalInfo}
           `);
       })
       .on("mousemove", function(event) {
