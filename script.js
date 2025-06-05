@@ -242,14 +242,13 @@ timeline.selectAll()
     }
   });
 
+const svgWidth = 800;
+const svgHeight = 600;
 
 function drawTop7GoalscorerTeamsGraph(data, container) {
   const top7Data = data
     .sort((a, b) => b["Goals For"] - a["Goals For"])
     .slice(0, 7);
-
-  const svgWidth = 800;
-  const svgHeight = 600;
 
   const barSvg = container
     .append("svg")
@@ -329,8 +328,6 @@ graphGroup.selectAll("text.team")
 }
 
 function drawGoalsScatterPlot(data, container) {
-  const svgWidth = 800;
-  const svgHeight = 600;
 
   const svg = container
     .append("svg")
@@ -437,8 +434,6 @@ function drawGoalsScatterPlot(data, container) {
 }
 
 function drawMatchResultsChart(data, container) {
-  const svgWidth = 800;
-  const svgHeight = 600;
 
   const svg = container
     .append("svg")
@@ -575,9 +570,8 @@ function showGraphsByYear(year) {
 }
 
 
-function drawTestGraph(container, country) {
-  const svgWidth = 800;
-  const svgHeight = 600;
+function drawPositionCountryGraph(container, country) {
+
   const margin = { top: 50, right: 50, bottom: 50, left: 50 };
   const width = svgWidth - margin.left - margin.right;
   const height = svgHeight - margin.top - margin.bottom;
@@ -692,9 +686,222 @@ function drawTestGraph(container, country) {
   });
 }
 
+function drawCountryStatsRadar(container, country) {
+
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const radius = Math.min(svgWidth - margin.left - margin.right, svgHeight - margin.top - margin.bottom) / 2 - 50;
+
+  const svg = container
+    .append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+  const graphGroup = svg.append("g")
+    .attr("transform", `translate(${svgWidth / 2}, ${svgHeight / 2})`);
+
+  Promise.all(
+    years.map(year =>
+      d3.json(`WC-Data/fifa${year}.json`).then(data => ({
+        year,
+        data: data.find(d => d.Team.toLowerCase() === country.toLowerCase())
+      }))
+    )
+  ).then(results => {
+    const countryData = results
+      .filter(result => result.data)
+      .map(result => result.data);
+
+    const totalGames = countryData.reduce((sum, d) => sum + d["Games Played"], 0);
+    const totalWins = countryData.reduce((sum, d) => sum + d.Win, 0);
+    const totalGoalsFor = countryData.reduce((sum, d) => sum + d["Goals For"], 0);
+    const totalGoalsAgainst = countryData.reduce((sum, d) => sum + d["Goals Against"], 0);
+    const bestPosition = Math.min(...countryData.map(d => d.Position));
+    const appearances = countryData.length;
+    
+    const winRate = totalGames > 0 ? (totalWins / totalGames) * 100 : 0;
+    const avgGoalsFor = totalGames > 0 ? totalGoalsFor / totalGames : 0;
+    const avgGoalsAgainst = totalGames > 0 ? totalGoalsAgainst / totalGames : 0;
+    const goalDiffRatio = totalGoalsAgainst > 0 ? totalGoalsFor / totalGoalsAgainst : totalGoalsFor;
+    
+    const radarData = [
+      { 
+        axis: "Učestalost kvalifikacija", 
+        value: Math.min((appearances / years.length) * 100, 100),
+        rawValue: `${appearances}/${years.length}`,
+        description: "Broj kvalifikacija / ukupno SP-a"
+      },
+      { 
+        axis: "Postotak pobjeda", 
+        value: winRate,
+        rawValue: `${winRate.toFixed(1)}%`,
+        description: "Postotak pobjeda od ukupnih utakmica"
+      },
+      { 
+        axis: "Napadačka efikasnost", 
+        value: Math.min(avgGoalsFor * 20, 100),
+        rawValue: avgGoalsFor.toFixed(1),
+        description: "Prosjek postignutih golova po utakmici"
+      },
+      { 
+        axis: "Defenzivna efikasnost", 
+        value: Math.max(100 - (avgGoalsAgainst * 20), 0),
+        rawValue: avgGoalsAgainst.toFixed(1),
+        description: "Obrnut prosjek primljenih golova"
+      },
+      { 
+        axis: "Gol razlika", 
+        value: Math.min(goalDiffRatio * 25, 100),
+        rawValue: goalDiffRatio.toFixed(2),
+        description: "Omjer postignutih i primljenih golova"
+      },
+      { 
+        axis: "Najbolji plasman", 
+        value: Math.max(100 - (bestPosition - 1) * 3, 0),
+        rawValue: bestPosition,
+        description: "Najbolja pozicija"
+      }
+    ];
+
+    const angleSlice = (Math.PI * 2) / radarData.length;
+
+    const levels = 5;
+    for (let i = 1; i <= levels; i++) {
+      graphGroup.append("circle")
+        .attr("r", (radius / levels) * i)
+        .attr("fill", "none")
+        .attr("stroke", "#CDCDCD")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.5);
+    }
+
+    radarData.forEach((d, i) => {
+      const angle = angleSlice * i - Math.PI / 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+
+      graphGroup.append("line")
+        .attr("x1", 0)
+        .attr("y1", 0)
+        .attr("x2", x)
+        .attr("y2", y)
+        .attr("stroke", "#CDCDCD")
+        .attr("stroke-width", 1);
+
+      const labelX = Math.cos(angle) * (radius + 30);
+      const labelY = Math.sin(angle) * (radius + 30);
+      
+      graphGroup.append("text")
+        .attr("x", labelX)
+        .attr("y", labelY)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .text(d.axis);
+    });
+
+    const line = d3.lineRadial()
+      .angle((d, i) => angleSlice * i)
+      .radius(d => (d.value / 100) * radius)
+      .curve(d3.curveLinearClosed);
+
+    graphGroup.append("path")
+      .datum(radarData)
+      .attr("d", line)
+      .attr("fill", "rgba(54, 162, 235, 0.3)")
+      .attr("stroke", "rgba(54, 162, 235, 1)")
+      .attr("stroke-width", 2);
+
+    graphGroup.selectAll("circle.data-point")
+      .data(radarData)
+      .enter()
+      .append("circle")
+      .attr("class", "data-point")
+      .attr("cx", (d, i) => {
+        const angle = angleSlice * i - Math.PI / 2;
+        return Math.cos(angle) * ((d.value / 100) * radius);
+      })
+      .attr("cy", (d, i) => {
+        const angle = angleSlice * i - Math.PI / 2;
+        return Math.sin(angle) * ((d.value / 100) * radius);
+      })
+      .attr("r", 4)
+      .attr("fill", "rgba(54, 162, 235, 1)")
+      .attr("stroke", "white")
+      .attr("stroke-width", 2)
+      .on("mouseover", function(event, d) {
+        d3.select(this).attr("r", 6);
+        d3.select("#tooltip")
+          .style("display", "block")
+          .html(`
+            <strong>${d.axis}</strong><br>
+            Vrijednost: ${d.rawValue}<br>
+            <em>${d.description}</em>
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY + 10) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select(this).attr("r", 4);
+        d3.select("#tooltip").style("display", "none");
+      });
+
+    for (let i = 1; i <= levels; i++) {
+      graphGroup.append("text")
+        .attr("x", 5)
+        .attr("y", -((radius / levels) * i))
+        .attr("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("fill", "#737373")
+        .text((100 / levels * i).toFixed(0));
+    }
+
+    svg.append("text")
+      .attr("x", svgWidth / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .style("font-size", "20px")
+      .style("font-weight", "bold")
+      .text(`${country} - Sveukupna statistika`);
+
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(20, ${svgHeight - 120})`);
+
+    legend.append("rect")
+      .attr("width", 200)
+      .attr("height", 100)
+      .attr("fill", "rgba(255, 255, 255, 0.9)")
+      .attr("stroke", "#ccc")
+      .attr("rx", 5);
+
+    const legendText = [
+      `Ukupno nastupa: ${appearances}`,
+      `Ukupno utakmica: ${totalGames}`,
+      `Ukupno pobjeda: ${totalWins}`,
+      `Najbolji plasman: ${bestPosition}`,
+      `Ukupno golova: ${totalGoalsFor}:${totalGoalsAgainst}`
+    ];
+
+    legend.selectAll("text")
+      .data(legendText)
+      .enter()
+      .append("text")
+      .attr("x", 10)
+      .attr("y", (d, i) => 20 + i * 15)
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text(d => d);
+
+  }).catch(error => {
+    console.error("Greška pri učitavanju podataka:", error);
+  });
+}
+
 function showGraphsByCountry(country) {
   const graphs = [
-    (container) => drawTestGraph(container, country),
+    (container) => drawPositionCountryGraph(container, country),
+    (container) => drawCountryStatsRadar(container, country)
   ];
   let currentGraphIndex = 0;
   const controlPanel = d3.select("#control-panel");
