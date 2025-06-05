@@ -943,7 +943,7 @@ function drawCountryStatsRadar(container, country) {
       `Ukupno utakmica: ${totalGames}`,
       `Ukupno pobjeda: ${totalWins}`,
       `Najbolji plasman: ${bestPosition}`,
-      `Ukupno golova: ${totalGoalsFor}:${totalGoalsAgainst}`
+      `Gol razlika: ${totalGoalsFor}:${totalGoalsAgainst}`
     ];
 
     legend.selectAll("text")
