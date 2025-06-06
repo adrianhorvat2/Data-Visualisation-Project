@@ -72,10 +72,14 @@ const g = svg.append("g");
 let countries = [], worldData;
 let isYearSelected = false;
 
+let selectedCountry = null; 
+
 function setDefaultHoverBehavior(selection) {
   selection
     .on("mouseover", function(event, d) {
-      d3.select(this).attr("fill", "rgb(150, 150, 150)");
+      if (d.properties.name !== selectedCountry) {
+        d3.select(this).attr("fill", "rgb(150, 150, 150)");
+      }
       d3.select("#tooltip")
         .style("display", "block")
         .html(`<strong>${d.properties.name}</strong>`);
@@ -85,16 +89,22 @@ function setDefaultHoverBehavior(selection) {
         .style("left", (event.pageX + 10) + "px")
         .style("top", (event.pageY + 10) + "px");
     })
-    .on("mouseout", function() {
-      d3.select(this).attr("fill", "rgb(230, 230, 230)");
+    .on("mouseout", function(event, d) {
+      if (d.properties.name !== selectedCountry) {
+        d3.select(this).attr("fill", "rgb(230, 230, 230)");
+      }
       d3.select("#tooltip").style("display", "none");
     })
     .on("click", function(event, d) {
-      if (!isYearSelected) {
-        showGraphsByCountry(d.properties.name);
+      if (selectedCountry) {
+        countries.filter(c => c.properties.name === selectedCountry)
+          .attr("fill", "rgb(230, 230, 230)");
       }
+      selectedCountry = d.properties.name;
+      d3.select(this).attr("fill", "rgb(150, 150, 150)"); 
+      showGraphsByCountry(d.properties.name);
     });
-    showDefaultMessage();
+  showDefaultMessage();
 }
 
 function showDefaultMessage() {
@@ -181,6 +191,10 @@ const historicalCountryMap = {
     "Kyrgyzstan",
     "Tajikistan",
     "Turkmenistan"
+  ],
+  "yugoslavia(srj)":[
+    "Serbia",
+    "Montenegro",
   ]
 };
 
